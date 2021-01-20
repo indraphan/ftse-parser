@@ -1,10 +1,12 @@
 package com.indraphan.ftse;
 
+import java.math.BigDecimal;
+
 public class FtseData {
     private String name;
     private Integer noOfCons;
     private Long netCapitalInMillion;
-    private Double weightPercentage;
+    private BigDecimal weightPercentage;
 
     public String getName() {
         return name;
@@ -30,11 +32,11 @@ public class FtseData {
         this.netCapitalInMillion = netCapitalInMillion;
     }
 
-    public Double getWeightPercentage() {
+    public BigDecimal getWeightPercentage() {
         return weightPercentage;
     }
 
-    public void setWeightPercentage(Double weightPercentage) {
+    public void setWeightPercentage(BigDecimal weightPercentage) {
         this.weightPercentage = weightPercentage;
     }
 

@@ -1,5 +1,6 @@
 package com.indraphan.ftse;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
@@ -20,7 +21,7 @@ public class FtseParser {
                 ftseData.setName(ftseData.getName() + " " + data[idx++]);
             ftseData.setNoOfCons(Integer.parseInt(data[idx++]));
             ftseData.setNetCapitalInMillion(numberFormat.parse(data[idx++]).longValue());
-            ftseData.setWeightPercentage(numberFormat.parse(data[idx++]).doubleValue());
+            ftseData.setWeightPercentage(BigDecimal.valueOf(numberFormat.parse(data[idx++]).doubleValue()));
         } catch (ParseException e) {
             e.printStackTrace();
         }

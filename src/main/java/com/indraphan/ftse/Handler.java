@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Handler implements RequestHandler<S3Event, String> {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     public static final String CHARSET_UTF_8 = "UTF-8";
-    public static final String PARAMETER_REGION_SRC_KEY = "parameters/regions.txt";
+    public static final String PARAMETER_REGION_SRC_KEY = System.getenv("PARAMETER_REGION_SRC_KEY");
 
     private LambdaLogger logger;
 
@@ -41,18 +42,20 @@ public class Handler implements RequestHandler<S3Event, String> {
         Map<String, String> regions = getRegionsData(s3Event);
         logger.log("REGIONS: " + regions);
 
-        Map<String, Double> regionSummaries = getRegionSummaries(ftseDataList, regions);
+        Map<String, BigDecimal> regionSummaries = getRegionSummaries(ftseDataList, regions);
         logger.log("SUMMARIES: " + gson.toJson(regionSummaries));
+
+        sendNotification(ftseDataList, regions, regionSummaries);
 
         return regionSummaries.toString();
     }
 
-    private Map<String, Double> getRegionSummaries(List<FtseData> ftseDataList, Map<String, String> regions) {
-        Map<String, Double> regionSummaries = ftseDataList.stream()
+    private Map<String, BigDecimal> getRegionSummaries(List<FtseData> ftseDataList, Map<String, String> regions) {
+        Map<String, BigDecimal> regionSummaries = ftseDataList.stream()
                 .collect(Collectors.toMap(
                         d -> regions.get(d.getName()),
                         d -> d.getWeightPercentage(),
-                        (v1, v2) -> v1 + v2
+                        (v1, v2) -> v1.add(v2)
                 ));
 
         return regionSummaries;
@@ -123,7 +126,17 @@ public class Handler implements RequestHandler<S3Event, String> {
         return s3Client.getObject(new GetObjectRequest(srcBucket, srcKey));
     }
 
+    private void sendNotification(List<FtseData> ftseDataList, Map<String, String> regions, Map<String, BigDecimal> regionSummaries) {
+        AmazonSESClient sesClient = new AmazonSESClient();
+
+        try {
+            sesClient.sendEmail(gson.toJson(regionSummaries));
+        } catch (IOException e) {
+            handleIOException(e);
+        }
+    }
+
     private void handleIOException(IOException e) {
-        e.printStackTrace();
+        logger.log(gson.toJson(e.getStackTrace()));
     }
 }
